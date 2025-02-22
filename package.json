@@ -1,48 +1,50 @@
 {
-  "name": "homebridge-plugin-name",
-  "displayName": "Plugin Name",
-  "type": "module",
-  "version": "1.0.0",
-  "private": true,
-  "description": "A short description about what your plugin does.",
-  "author": "Your Name",
+  "displayName": "Homebridge Smart Thermostat Control",
+  "name": "homebridge-smart-thermostat-control",
+  "version": "1.0.0-beta.1",
+  "author": {
+    "name": "Dan Lofty"
+  },
+  "description": "A homebridge plugin for smart thermostat control with TV heat compensation",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/USERNAME/GITHUB_PROJECT_NAME#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git://github.com/loftydan/homebridge-smart-thermostat-control.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/loftydan/homebridge-smart-thermostat-control/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "homebridge": ">=1.6.0"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "lint": "eslint src/**.ts --max-warnings=0",
+    "watch": "npm run build && npm link && nodemon",
+    "build": "rimraf ./dist && tsc",
+    "prepublishOnly": "npm run lint && npm run build"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "thermostat",
+    "temperature",
+    "smart-home",
+    "automation"
   ],
-  "main": "dist/index.js",
-  "engines": {
-    "node": "^18.20.4 || ^20.18.0 || ^22.10.0",
-    "homebridge": "^1.8.0 || ^2.0.0-beta.0"
-  },
-  "scripts": {
-    "build": "rimraf ./dist && tsc",
-    "lint": "eslint . --max-warnings=0",
-    "prepublishOnly": "npm run lint && npm run build",
-    "watch": "npm run build && npm link && nodemon"
-  },
   "dependencies": {
-    "homebridge-lib": "^7.1.4",
     "node-schedule": "^2.1.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.21.0",
-    "@types/node": "^22.13.5",
-    "@types/node-schedule": "^2.1.7",
-    "eslint": "^9.21.0",
-    "homebridge": "^2.0.0-beta.0",
-    "nodemon": "^3.1.9",
-    "rimraf": "^6.0.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.24.1"
+    "@types/node": "^18.16.20",
+    "@types/node-schedule": "^2.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "eslint": "^8.45.0",
+    "homebridge": "^1.6.0",
+    "nodemon": "^2.0.22",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
   }
 }
