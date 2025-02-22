@@ -1,7 +1,7 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 import * as schedule from 'node-schedule';
 
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
+// import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { SmartThermostatConfig, ApplianceConfig, ThermostatConfig } from './settings';
 
 /**
@@ -26,10 +26,10 @@ export class SmartThermostatPlatform implements DynamicPlatformPlugin {
   ) {
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
-    
+
     // Convert config to our typed interface and store it
     this.config = config as SmartThermostatConfig;
-    
+
     // Set up configuration values with defaults
     this.pollInterval = this.config.pollInterval || 180;  // 3 minutes
     this.tvTempAdjustment = this.config.tvTempAdjustment || 2;  // 2 degrees
@@ -55,9 +55,9 @@ export class SmartThermostatPlatform implements DynamicPlatformPlugin {
    * Helper to find an accessory by name or UUID
    */
   private getAccessory(identifier: string): PlatformAccessory | undefined {
-    return Array.from(this.accessories.values()).find(accessory => 
-      accessory.displayName === identifier || 
-      accessory.UUID === identifier
+    return Array.from(this.accessories.values()).find(accessory =>
+      accessory.displayName === identifier ||
+      accessory.UUID === identifier,
     );
   }
 
@@ -76,21 +76,21 @@ export class SmartThermostatPlatform implements DynamicPlatformPlugin {
    */
   private async getAdjustedTemperature(sensorName: string): Promise<number> {
     let baseTemp = this.getTemperature(sensorName) || 0;
-    
+
     // Check configured TV sensors
     for (const tvSensor of this.config.tvSensors || []) {
       const sensor = this.getAccessory(tvSensor);
       const isActive = sensor?.getService(this.Service.MotionSensor)
         ?.getCharacteristic(this.Characteristic.MotionDetected)
         ?.value as boolean;
-      
+
       if (isActive) {
         baseTemp -= this.tvTempAdjustment;
         this.log.debug(`TV active, adjusting temperature by -${this.tvTempAdjustment}°`);
         break;
       }
     }
-    
+
     return baseTemp;
   }
 
@@ -99,41 +99,41 @@ export class SmartThermostatPlatform implements DynamicPlatformPlugin {
    */
   private async setApplianceState(applianceConfig: ApplianceConfig, state: boolean): Promise<void> {
     const { name, controlType } = applianceConfig;
-    
-    switch (controlType) {
-      case 'switch': {
-        const accessory = this.getAccessory(name);
-        if (accessory) {
-          accessory.getService(this.Service.Switch)
-            ?.getCharacteristic(this.Characteristic.On)
-            ?.setValue(state);
-        }
-        break;
-      }
-      
-      case 'webhook': {
-        if (!applianceConfig.webhook) {
-          this.log.error(`No webhook URL configured for ${name}`);
-          return;
-        }
 
-        try {
-          const response = await fetch(applianceConfig.webhook, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ state })
-          });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-        } catch (error) {
-          this.log.error(`Webhook error for ${name}: ${error}`);
-        }
-        break;
+    switch (controlType) {
+    case 'switch': {
+      const accessory = this.getAccessory(name);
+      if (accessory) {
+        accessory.getService(this.Service.Switch)
+          ?.getCharacteristic(this.Characteristic.On)
+          ?.setValue(state);
       }
+      break;
     }
-    
+
+    case 'webhook': {
+      if (!applianceConfig.webhook) {
+        this.log.error(`No webhook URL configured for ${name}`);
+        return;
+      }
+
+      try {
+        const response = await fetch(applianceConfig.webhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      } catch (error) {
+        this.log.error(`Webhook error for ${name}: ${error}`);
+      }
+      break;
+    }
+    }
+
     this.log.info(`Set ${name} to ${state}`);
   }
 
@@ -159,37 +159,37 @@ export class SmartThermostatPlatform implements DynamicPlatformPlugin {
     const currentMode = thermostatService
       .getCharacteristic(this.Characteristic.CurrentHeatingCoolingState)
       .value as number;
-    
+
     const targetTemp = thermostatService
       .getCharacteristic(this.Characteristic.TargetTemperature)
       .value as number;
 
     // Get current temperature with TV adjustment if needed
     const currentTemp = await this.getAdjustedTemperature(tempSensor);
-    
+
     this.log.debug(`${name} - Mode: ${currentMode}, Target: ${targetTemp}°, Current: ${currentTemp}°`);
 
     // Control each appliance based on thermostat state
     for (const appliance of appliances) {
       switch (currentMode) {
-        case this.Characteristic.CurrentHeatingCoolingState.HEAT:
-          if (currentTemp < targetTemp) {
-            await this.setApplianceState(appliance, true);
-          } else if (currentTemp >= targetTemp) {
-            await this.setApplianceState(appliance, false);
-          }
-          break;
-          
-        case this.Characteristic.CurrentHeatingCoolingState.COOL:
-          if (currentTemp > targetTemp) {
-            await this.setApplianceState(appliance, true);
-          } else if (currentTemp <= targetTemp) {
-            await this.setApplianceState(appliance, false);
-          }
-          break;
-          
-        default:
+      case this.Characteristic.CurrentHeatingCoolingState.HEAT:
+        if (currentTemp < targetTemp) {
+          await this.setApplianceState(appliance, true);
+        } else if (currentTemp >= targetTemp) {
           await this.setApplianceState(appliance, false);
+        }
+        break;
+
+      case this.Characteristic.CurrentHeatingCoolingState.COOL:
+        if (currentTemp > targetTemp) {
+          await this.setApplianceState(appliance, true);
+        } else if (currentTemp <= targetTemp) {
+          await this.setApplianceState(appliance, false);
+        }
+        break;
+
+      default:
+        await this.setApplianceState(appliance, false);
       }
     }
   }
@@ -217,8 +217,8 @@ export class SmartThermostatPlatform implements DynamicPlatformPlugin {
           ?.getCharacteristic(this.Characteristic.MotionDetected)
           ?.on('change', () => {
             // Trigger immediate temperature check when TV state changes
-            this.config.thermostats?.forEach(thermostat => 
-              this.checkThermostat(thermostat)
+            this.config.thermostats?.forEach(thermostat =>
+              this.checkThermostat(thermostat),
             );
           });
       }
