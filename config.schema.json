@@ -1,8 +1,7 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "HomebridgeSmartThermostat",
   "pluginType": "platform",
   "singular": true,
-  "strictValidation": false,
   "schema": {
     "type": "object",
     "properties": {
@@ -10,7 +9,87 @@
         "title": "Name",
         "type": "string",
         "required": true,
-        "default": "Example Dynamic Platform"
+        "default": "Smart Thermostat"
+      },
+      "pollInterval": {
+        "title": "Temperature Check Interval",
+        "type": "number",
+        "description": "How often to check temperatures (in seconds)",
+        "default": 180,
+        "minimum": 30,
+        "required": true
+      },
+      "tvTempAdjustment": {
+        "title": "TV Heat Adjustment",
+        "type": "number",
+        "description": "Degrees to subtract when TV is active",
+        "default": 2,
+        "required": true
+      },
+      "tvSensors": {
+        "title": "TV Motion Sensors",
+        "type": "array",
+        "items": {
+          "title": "Sensor Name",
+          "type": "string",
+          "description": "Name of the AppleTV Enhanced motion sensor"
+        }
+      },
+      "thermostats": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "title": "Thermostat Name",
+              "type": "string",
+              "required": true,
+              "description": "Name of the virtual thermostat in Homebridge"
+            },
+            "tempSensor": {
+              "title": "Temperature Sensor",
+              "type": "string",
+              "required": true,
+              "description": "Name of the temperature sensor (e.g., HomePod)"
+            },
+            "appliances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "title": "Appliance Name",
+                    "type": "string",
+                    "required": true,
+                    "description": "Name of the appliance in Homebridge"
+                  },
+                  "type": {
+                    "title": "Appliance Type",
+                    "type": "string",
+                    "enum": ["heater", "cooler", "fan"],
+                    "required": true
+                  },
+                  "controlType": {
+                    "title": "Control Method",
+                    "type": "string",
+                    "enum": ["switch", "webhook"],
+                    "required": true,
+                    "description": "How to control this appliance"
+                  },
+                  "webhook": {
+                    "title": "Webhook URL",
+                    "type": "string",
+                    "description": "URL to call when controlling via webhook",
+                    "format": "uri",
+                    "condition": {
+                      "functionBody": "return model.controlType === 'webhook';"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
