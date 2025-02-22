@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Smart Thermostat Control",
   "name": "homebridge-smart-thermostat-control",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.1-beta.0",
   "author": {
     "name": "Dan Lofty"
   },
